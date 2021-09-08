@@ -21,6 +21,7 @@ public class UserMapper implements Mapper<User, UserDTO>{
 		dto.setAge(entity.getAge());
 		dto.setName(entity.getName());
 		dto.setUsername(entity.getUserName());
+		dto.setRoles(entity.getRoles());
 		return dto;
 	}
 

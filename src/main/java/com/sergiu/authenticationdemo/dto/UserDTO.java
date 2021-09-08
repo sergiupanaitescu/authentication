@@ -1,20 +1,33 @@
 package com.sergiu.authenticationdemo.dto;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.sergiu.authenticationdemo.constants.UserRoles;
 
 @JsonInclude(Include.NON_NULL)
 public class UserDTO {
 
 	private String username;
-	
+
 	private String name;
-	
+
 	private int age;
-	
+
 	private String address;
-	
+
 	private String token;
+
+	private List<UserRoles> roles;
+
+	public List<UserRoles> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(List<UserRoles> roles) {
+		this.roles = roles;
+	}
 
 	public String getUsername() {
 		return username;
@@ -55,6 +68,5 @@ public class UserDTO {
 	public void setToken(String token) {
 		this.token = token;
 	}
-	
-	
+
 }
