@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Service;
@@ -26,8 +27,11 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Service
 public class AuthenticationService {
 
+	@Value("${secretKey}")
+	private String secretKey;
+
 	private UserRepository userRepo;
-	
+
 	private UserMapper userMapper;
 
 	public AuthenticationService(UserRepository userRepo, UserMapper userMapper) {
@@ -44,13 +48,13 @@ public class AuthenticationService {
 				md = MessageDigest.getInstance("MD5");
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();// TODO log
-				throw new InternalServerError();//TODO maybe error message
+				throw new InternalServerError();// TODO maybe error message
 			}
 			md.update(password.getBytes());
 			byte[] digest = md.digest();
 			String passwordHash = DatatypeConverter.printHexBinary(digest).toUpperCase();
 			if (passwordHash.equalsIgnoreCase(user.getPassword())) {
-				UserDTO loggedUser =  userMapper.toDto(user);
+				UserDTO loggedUser = userMapper.toDto(user);
 				loggedUser.setToken(getJWTToken(user));
 				return loggedUser;
 			} else {
@@ -60,24 +64,17 @@ public class AuthenticationService {
 		}
 		throw new LoginException();
 	}
-	
+
 	private String getJWTToken(User user) {
-		String secretKey = "RgUkXp2s5v8y/B?D(G+KbPeShVmYq3t6w9z$C&F)H@McQfTjWnZr4u7x!A%D*G-K";
 		List<GrantedAuthority> grantedAuthorities = AuthorityUtils.commaSeparatedStringToAuthorityList(
 				user.getRoles().stream().map(Object::toString).collect(Collectors.joining(",")));
-		
-		String token = Jwts
-				.builder()
-				.setId("jwtCrazyToken")
-				.setSubject(user.getUserName())
+
+		String token = Jwts.builder().setId("jwtCrazyToken").setSubject(user.getUserName())
 				.claim("authorities",
-						grantedAuthorities.stream()
-								.map(GrantedAuthority::getAuthority)
-								.collect(Collectors.toList()))
+						grantedAuthorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
 				.setIssuedAt(new Date(System.currentTimeMillis()))
 				.setExpiration(new Date(System.currentTimeMillis() + 600000))
-				.signWith(SignatureAlgorithm.HS512,
-						secretKey.getBytes()).compact();
+				.signWith(SignatureAlgorithm.HS512, secretKey.getBytes()).compact();
 
 		return "Bearer " + token;
 	}
