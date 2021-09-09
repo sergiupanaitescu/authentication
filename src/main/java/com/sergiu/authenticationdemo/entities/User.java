@@ -1,5 +1,6 @@
 package com.sergiu.authenticationdemo.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CollectionTable;
@@ -41,7 +42,7 @@ public class User {
 	@Enumerated(EnumType.STRING)
     @CollectionTable(name = "USER_ROLES", joinColumns=@JoinColumn(name = "id", referencedColumnName = "id"))
     @Column(name = "role") 
-	private List<UserRoles> roles;
+	private List<UserRoles> roles = new ArrayList<>();
 
 	public List<UserRoles> getRoles() {
 		return roles;

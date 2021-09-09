@@ -18,13 +18,16 @@ public class JwtInvalidationCache {
 	
 	private static final Logger logger = LoggerFactory.getLogger(JwtInvalidationCache.class);
 	
-	@Value("${secretKey}")
 	private String secretKey;
 	
 	private static final String BEARER = "Bearer ";
 
 	//We assume the tokens are unique
 	private Map<String, Long> blackListedTokens = new HashMap<>();
+	
+	public JwtInvalidationCache(@Value("${secretKey}") String secretKey) {
+		this.secretKey = secretKey;
+	}
 	
 	public void blackList(String token) {
 		String strippedToken = token.replace(BEARER, "");

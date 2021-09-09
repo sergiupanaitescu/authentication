@@ -2,6 +2,7 @@ package com.sergiu.authenticationdemo.service;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -29,10 +30,9 @@ import io.jsonwebtoken.SignatureAlgorithm;
 
 @Service
 public class AuthenticationService {
-	
+
 	Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
-	@Value("${secretKey}")
 	private String secretKey;
 
 	private UserRepository userRepo;
@@ -41,11 +41,12 @@ public class AuthenticationService {
 
 	private JwtInvalidationCache invalidationcache;
 
-	public AuthenticationService(UserRepository userRepo, UserMapper userMapper,
-			JwtInvalidationCache invalidationcache) {
+	public AuthenticationService(@Value("${secretKey}") String secretKey, UserRepository userRepo,
+			UserMapper userMapper, JwtInvalidationCache invalidationcache) {
 		this.userRepo = userRepo;
 		this.userMapper = userMapper;
 		this.invalidationcache = invalidationcache;
+		this.secretKey = secretKey;
 	}
 
 	public UserDTO login(String username, String password) {
@@ -61,7 +62,7 @@ public class AuthenticationService {
 			}
 			md.update(password.getBytes());
 			byte[] digest = md.digest();
-			String passwordHash = DatatypeConverter.printHexBinary(digest).toUpperCase();
+			String passwordHash = DatatypeConverter.printHexBinary(digest);
 			if (passwordHash.equalsIgnoreCase(user.getPassword())) {
 				UserDTO loggedUser = userMapper.toDto(user);
 				loggedUser.setToken(getJWTToken(user));
@@ -78,8 +79,10 @@ public class AuthenticationService {
 	}
 
 	private String getJWTToken(User user) {
-		List<GrantedAuthority> grantedAuthorities = AuthorityUtils.commaSeparatedStringToAuthorityList(
-				user.getRoles().stream().map(Object::toString).collect(Collectors.joining(",")));
+		List<GrantedAuthority> grantedAuthorities = AuthorityUtils
+				.commaSeparatedStringToAuthorityList(!user.getRoles().isEmpty()
+						? user.getRoles().stream().map(Object::toString).collect(Collectors.joining(","))
+						: "");
 
 		String token = Jwts.builder().setId("jwtCrazyToken").setSubject(user.getUserName())
 				.claim("authorities",

@@ -15,7 +15,6 @@ public class UserDetailsController {
 	private UserDetailsService detailsService;
 
 	public UserDetailsController(UserDetailsService detailsService) {
-		super();
 		this.detailsService = detailsService;
 	}
 
