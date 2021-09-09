@@ -2,20 +2,19 @@ package com.sergiu.authenticationdemo.service;
 
 import java.util.Optional;
 
-import javax.persistence.NoResultException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.sergiu.authenticationdemo.dto.UserDTO;
 import com.sergiu.authenticationdemo.entities.User;
+import com.sergiu.authenticationdemo.exceptions.NoUserFoundException;
 import com.sergiu.authenticationdemo.mappers.UserMapper;
 import com.sergiu.authenticationdemo.repository.UserRepository;
 
 @Service
 public class UserDetailsService {
-	
+
 	Logger logger = LoggerFactory.getLogger(UserDetailsService.class);
 
 	private UserRepository userRepo;
@@ -32,8 +31,8 @@ public class UserDetailsService {
 		if (user.isPresent()) {
 			return userMapper.toDto(user.get());
 		}
-		logger.info("User: " + username + " for which details were requested does not exist!");
-		throw new NoResultException();
+		logger.info(String.format("User: %s for which details were requested does not exist!", username));
+		throw new NoUserFoundException("User: " + username + " does not exist!");
 
 	}
 }

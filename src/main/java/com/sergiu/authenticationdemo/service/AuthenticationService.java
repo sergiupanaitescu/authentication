@@ -57,7 +57,7 @@ public class AuthenticationService {
 				md = MessageDigest.getInstance("MD5");
 			} catch (NoSuchAlgorithmException e) {
 				logger.error("Password hashing algorithm error!");
-				throw new InternalServerError();// TODO maybe error message
+				throw new InternalServerError();
 			}
 			md.update(password.getBytes());
 			byte[] digest = md.digest();
@@ -65,15 +65,16 @@ public class AuthenticationService {
 			if (passwordHash.equalsIgnoreCase(user.getPassword())) {
 				UserDTO loggedUser = userMapper.toDto(user);
 				loggedUser.setToken(getJWTToken(user));
-				logger.info("User: " + username + " was logged in succesfully");
+				logger.info(String.format("User: %s was logged in succesfully", username));
 				return loggedUser;
 			} else {
-				logger.info("User: " + username + " failed to log in! Password did not match");
-				throw new LoginException();
+				String userPassError = String.format("User: %s failed to log in! Password did not match", username);
+				logger.info(userPassError);
+				throw new LoginException(userPassError);
 			}
 
 		}
-		throw new LoginException();
+		throw new LoginException(String.format("User: %s failed to log in! User is not registered!", username));
 	}
 
 	private String getJWTToken(User user) {
@@ -92,6 +93,6 @@ public class AuthenticationService {
 
 	public void logout(String token) {
 		invalidationcache.blackList(token);
-		logger.info("Token: " + token + "was blacklisted because of user log out");
+		logger.info(String.format("Token: %s was blacklisted because of user log out", token));
 	}
 }
