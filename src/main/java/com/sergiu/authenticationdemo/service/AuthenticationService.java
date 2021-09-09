@@ -14,6 +14,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Service;
 
+import com.sergiu.authenticationdemo.cache.JwtInvalidationCache;
 import com.sergiu.authenticationdemo.dto.UserDTO;
 import com.sergiu.authenticationdemo.entities.User;
 import com.sergiu.authenticationdemo.exceptions.InternalServerError;
@@ -34,9 +35,13 @@ public class AuthenticationService {
 
 	private UserMapper userMapper;
 
-	public AuthenticationService(UserRepository userRepo, UserMapper userMapper) {
+	private JwtInvalidationCache invalidationcache;
+
+	public AuthenticationService(UserRepository userRepo, UserMapper userMapper,
+			JwtInvalidationCache invalidationcache) {
 		this.userRepo = userRepo;
 		this.userMapper = userMapper;
+		this.invalidationcache = invalidationcache;
 	}
 
 	public UserDTO login(String username, String password) {
@@ -77,5 +82,9 @@ public class AuthenticationService {
 				.signWith(SignatureAlgorithm.HS512, secretKey.getBytes()).compact();
 
 		return "Bearer " + token;
+	}
+
+	public void logout(String token) {
+		invalidationcache.blackList(token);
 	}
 }

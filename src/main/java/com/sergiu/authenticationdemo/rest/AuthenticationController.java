@@ -1,6 +1,7 @@
 package com.sergiu.authenticationdemo.rest;
 
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +24,13 @@ public class AuthenticationController {
 	public UserDTO login(@RequestParam("user") String username, @RequestParam("password") String password) {
 
 		return authService.login(username, password);
+
+	}
+
+	@PostMapping("/logout")
+	public void logout(@RequestHeader("Authorization") String jwtToken) {
+
+		authService.logout(jwtToken);
 
 	}
 }

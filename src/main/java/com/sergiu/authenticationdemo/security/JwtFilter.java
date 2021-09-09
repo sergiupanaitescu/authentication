@@ -16,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.sergiu.authenticationdemo.cache.JwtInvalidationCache;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -23,16 +25,23 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 
 @Component
-public class JwtFilter extends OncePerRequestFilter{
-	
+public class JwtFilter extends OncePerRequestFilter {
+
 	private final String HEADER = "Authorization";
 	private final String BEARER = "Bearer ";
-	
+
 	@Value("${secretKey}")
 	private String secretKey;
 
+	private JwtInvalidationCache invalidationCache;
+
+	public JwtFilter(JwtInvalidationCache invalidationCache) {
+		this.invalidationCache = invalidationCache;
+	}
+
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+			throws ServletException, IOException {
 		try {
 			if (checkJWTToken(request, response)) {
 				Claims claims = validateToken(request);
@@ -41,7 +50,7 @@ public class JwtFilter extends OncePerRequestFilter{
 				} else {
 					SecurityContextHolder.clearContext();
 				}
-			}else {
+			} else {
 				SecurityContextHolder.clearContext();
 			}
 			chain.doFilter(request, response);
@@ -51,13 +60,12 @@ public class JwtFilter extends OncePerRequestFilter{
 			return;
 		}
 	}
-	
+
 	private Claims validateToken(HttpServletRequest request) {
-		//TODO check if token was blacklisted
+		// TODO check if token was blacklisted
 		String jwtToken = request.getHeader(HEADER).replace(BEARER, "");
 		return Jwts.parser().setSigningKey(secretKey.getBytes()).parseClaimsJws(jwtToken).getBody();
 	}
-
 
 	private void setAuthenticatedUserOnContext(Claims claims) {
 		@SuppressWarnings("unchecked")
@@ -73,6 +81,10 @@ public class JwtFilter extends OncePerRequestFilter{
 		String authenticationHeader = request.getHeader(HEADER);
 		if (authenticationHeader == null || !authenticationHeader.startsWith(BEARER))
 			return false;
+		if (invalidationCache.isTokenBlackListed(request.getHeader(HEADER).replace(BEARER, ""))) {
+			return false;
+			//log blacklisted
+		}
 		return true;
 	}
 
