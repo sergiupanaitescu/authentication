@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -27,6 +29,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 
 @Service
 public class AuthenticationService {
+	
+	Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
 	@Value("${secretKey}")
 	private String secretKey;
@@ -52,7 +56,7 @@ public class AuthenticationService {
 			try {
 				md = MessageDigest.getInstance("MD5");
 			} catch (NoSuchAlgorithmException e) {
-				e.printStackTrace();// TODO log
+				logger.error("Password hashing algorithm error!");
 				throw new InternalServerError();// TODO maybe error message
 			}
 			md.update(password.getBytes());
@@ -61,8 +65,10 @@ public class AuthenticationService {
 			if (passwordHash.equalsIgnoreCase(user.getPassword())) {
 				UserDTO loggedUser = userMapper.toDto(user);
 				loggedUser.setToken(getJWTToken(user));
+				logger.info("User: " + username + " was logged in succesfully");
 				return loggedUser;
 			} else {
+				logger.info("User: " + username + " failed to log in! Password did not match");
 				throw new LoginException();
 			}
 
@@ -86,5 +92,6 @@ public class AuthenticationService {
 
 	public void logout(String token) {
 		invalidationcache.blackList(token);
+		logger.info("Token: " + token + "was blacklisted because of user log out");
 	}
 }

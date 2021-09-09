@@ -9,6 +9,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,6 +28,8 @@ import io.jsonwebtoken.UnsupportedJwtException;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+	
+	Logger logger = LoggerFactory.getLogger(JwtFilter.class);
 
 	private final String HEADER = "Authorization";
 	private final String BEARER = "Bearer ";
@@ -48,9 +52,11 @@ public class JwtFilter extends OncePerRequestFilter {
 				if (claims.get("authorities") != null) {
 					setAuthenticatedUserOnContext(claims);
 				} else {
+					logger.info("User has no rights on the token!");
 					SecurityContextHolder.clearContext();
 				}
 			} else {
+				logger.info("JWT token check failed!");
 				SecurityContextHolder.clearContext();
 			}
 			chain.doFilter(request, response);
@@ -79,11 +85,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
 	private boolean checkJWTToken(HttpServletRequest request, HttpServletResponse res) {
 		String authenticationHeader = request.getHeader(HEADER);
-		if (authenticationHeader == null || !authenticationHeader.startsWith(BEARER))
+		if (authenticationHeader == null || !authenticationHeader.startsWith(BEARER)) {
+			logger.info("No token on request header!");
 			return false;
-		if (invalidationCache.isTokenBlackListed(request.getHeader(HEADER).replace(BEARER, ""))) {
+		}
+		String strippedToken = request.getHeader(HEADER).replace(BEARER, "");
+		if (invalidationCache.isTokenBlackListed(strippedToken)) {
+			logger.info("Token is blacklisted: " + strippedToken);
 			return false;
-			//log blacklisted
 		}
 		return true;
 	}

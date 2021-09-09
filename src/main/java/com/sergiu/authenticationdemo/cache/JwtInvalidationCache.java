@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,8 @@ import io.jsonwebtoken.Jwts;
 
 @Component
 public class JwtInvalidationCache {
+	
+	private static final Logger logger = LoggerFactory.getLogger(JwtInvalidationCache.class);
 	
 	@Value("${secretKey}")
 	private String secretKey;
@@ -36,6 +40,7 @@ public class JwtInvalidationCache {
 	//of course delays should be higher
 	@Scheduled(fixedDelay = 10000, initialDelay = 60000)
 	private void removeExpiredTokens() {
+		logger.info("Deleting expired tokens from blacklist");
 		blackListedTokens.entrySet().removeIf(e -> Instant.now().isAfter(Instant.ofEpochMilli(e.getValue())));
 	}
 	
